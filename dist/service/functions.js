@@ -1,0 +1,165 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import axios from 'axios';
+import chalk from 'chalk';
+import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl } from '../helpers/helpers.js';
+export const authenticatedRequest = (url, method, data, token) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const response = yield axios({
+            method,
+            url,
+            data: data !== null && data !== void 0 ? data : {},
+            headers,
+        });
+        return response.data;
+    }
+    catch (error) {
+        console.error(chalk.red('Error fetching data from API'), error.message);
+        throw error;
+    }
+});
+export const batchRequests = (urls) => __awaiter(void 0, void 0, void 0, function* () {
+    const results = [];
+    const errors = [];
+    const processUrl = (url) => __awaiter(void 0, void 0, void 0, function* () {
+        const startTime = Date.now();
+        try {
+            const result = yield apiRequest(url, 'GET');
+            const responseTime = Date.now() - startTime;
+            results.push({ url, result, responseTime });
+            console.log(chalk.green(`✅ Response from URL: ${url}`));
+            console.log(`   ➡ ${result}`);
+            console.log(chalk.bgBlueBright(`⏱️  Response time: ${responseTime} ms\n`));
+        }
+        catch (error) {
+            errors.push({ url, error: error.message });
+            console.error(chalk.red(`❌ Error fetching URL: ${url}`));
+            console.error(`   ➡ ${error.message}\n`);
+        }
+    });
+    const batches = [];
+    for (let i = 0; i < urls.length; i += MAX_CONCURRENT_REQUESTS) {
+        const batch = urls.slice(i, i + MAX_CONCURRENT_REQUESTS).map(processUrl);
+        batches.push(...batch);
+        yield Promise.all(batch);
+    }
+    console.log(chalk.yellow(`📊 Total successful requests: ${results.length}`));
+    console.log(chalk.red(`🔴 Total failed requests: ${errors.length}`));
+    if (errors.length > 0) {
+        console.log(chalk.red('🚨 Errors:'));
+        errors.forEach(({ url, error }) => {
+            console.log(chalk.underline.visible(`   - URL: ${url} ➡ ${error}`));
+        });
+    }
+});
+export const checkEndpointHealth = (baseUrl) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!isValidUrl(baseUrl)) {
+        console.error(chalk.red(`Invalid URL: ${baseUrl}`));
+        return;
+    }
+    try {
+        const response = yield axios.get(baseUrl, { timeout: TIMEOUT_MS });
+        if (response.status === HTTP_OK) {
+            console.log(chalk.bold.green(`${HEALTHY_MESSAGE}: ${baseUrl}`));
+        }
+        else {
+            console.error(chalk.yellow(`${UNHEALTHY_MESSAGE}: ${baseUrl} - Status Code: ${response.status}`));
+        }
+    }
+    catch (error) {
+        if (axios.isAxiosError(error)) {
+            if (error.code === 'ECONNABORTED') {
+                console.error(chalk.red(`${UNHEALTHY_MESSAGE}: ${baseUrl} - Request timed out`));
+            }
+            else {
+                console.error(chalk.red(`${UNHEALTHY_MESSAGE}: ${baseUrl} - ${error.message}`));
+            }
+        }
+        else {
+            console.error(chalk.red(`${UNHEALTHY_MESSAGE}: ${baseUrl} - An unexpected error occurred`));
+        }
+    }
+});
+export const monitorEndpoint = (baseUrl, interval) => __awaiter(void 0, void 0, void 0, function* () {
+    let intervalId;
+    const checkAndMonitor = () => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(chalk.blue(`Checking endpoint health..🎍 \nTimestamp: ${new Date().toUTCString()}`));
+        try {
+            yield checkEndpointHealth(baseUrl);
+        }
+        catch (error) {
+            console.error(chalk.red(`Error checking health: ${error.message}`));
+        }
+        clearInterval(intervalId);
+        intervalId = setInterval(checkAndMonitor, interval * 1000);
+    });
+    checkAndMonitor();
+});
+export const checkResponseTime = (baseUrl) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!isValidUrl(baseUrl)) {
+        console.error(chalk.red(`Invalid URL: ${baseUrl}`));
+        return;
+    }
+    const start = Date.now();
+    try {
+        yield axios.get(baseUrl, { timeout: TIMEOUT_MS });
+        const responseTime = Date.now() - start;
+        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} ${responseTime} ms`));
+    }
+    catch (error) {
+        handleError(error);
+    }
+});
+export const fetchBacklog = (baseUrl) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${baseUrl}/backlog`;
+    const backlogData = yield apiRequest(url, 'GET');
+    console.log(chalk.green('API Backlog:'), backlogData);
+});
+export const checkVersion = (baseUrl, expectedVersion) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${baseUrl}/version`;
+    const versionData = yield apiRequest(url, 'GET');
+    const currentVersion = versionData.version;
+    if (currentVersion === expectedVersion) {
+        console.log(chalk.green(`API version is compatible: ${currentVersion}`));
+    }
+    else {
+        console.log(chalk.red(`API version mismatch. Expected: ${expectedVersion}, Got: ${currentVersion}`));
+    }
+});
+export const createResource = (baseUrl, resourceData) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${baseUrl}/resource`;
+    const createdResource = yield apiRequest(url, 'POST', resourceData);
+    console.log(chalk.green('Resource created successfully:'), createdResource);
+});
+export const updateResource = (baseUrl, resourceId, resourceData) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${baseUrl}/resource/${resourceId}`;
+    const updatedResource = yield apiRequest(url, 'PUT', resourceData);
+    console.log(chalk.green('Resource updated successfully:'), updatedResource);
+});
+export const patchResource = (baseUrl, resourceId, resourceData) => __awaiter(void 0, void 0, void 0, function* () {
+    const url = `${baseUrl}/resource/${resourceId}`;
+    const patchedResource = yield apiRequest(url, 'PATCH', resourceData);
+    console.log(chalk.green('Resource patched successfully:'), patchedResource);
+});
+const handleError = (error) => {
+    if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+            console.error(chalk.red(`${ERROR_MESSAGE}: Request timed out`));
+        }
+        else {
+            console.error(chalk.red(`${ERROR_MESSAGE}: ${error.message}`));
+        }
+    }
+    else {
+        console.error(chalk.red(`${ERROR_MESSAGE}: ${error.message}`));
+    }
+};
+//# sourceMappingURL=functions.js.map

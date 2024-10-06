@@ -1,0 +1,70 @@
+{
+    "commands": {
+        "response-time": {
+            "command": "node dist/cli.js response-time {url}",
+            "options": {
+                "url": {
+                    "type": "string",
+                    "describe": "Specify the URL to check",
+                    "demandOption": true
+                }
+            }
+        },
+        "check-backlog": {
+            "command": "ts-node path/to/cli.ts check-backlog --url {url}",
+            "options": {
+                "url": {
+                    "type": "string",
+                    "describe": "Specify the base URL to check",
+                    "demandOption": true
+                }
+            }
+        },
+        "check-version": {
+            "command": "ts-node path/to/cli.ts check-version --url {url} --apiversion {apiversion}",
+            "options": {
+                "url": {
+                    "type": "string",
+                    "describe": "Specify the base URL to check",
+                    "demandOption": true
+                },
+                "apiversion": {
+                    "type": "string",
+                    "describe": "Specify the expected API version",
+                    "demandOption": true
+                }
+            }
+        },
+        "health-check": {
+            "command": "ts-node path/to/cli.ts health-check --url {url} --apiversion {apiversion}",
+            "options": {
+                "url": {
+                    "type": "string",
+                    "describe": "Specify the URL to check",
+                    "demandOption": true
+                },
+                "apiversion": {
+                    "type": "string",
+                    "describe": "Specify the API version",
+                    "demandOption": false
+                }
+            }
+        },
+        "monitor-health-endpoint": {
+            "command": "ts-node path/to/cli.ts monitor-health-endpoint --url {url} --interval {interval}",
+            "options": {
+                "url": {
+                    "type": "string",
+                    "describe": "Specify the URL to check",
+                    "demandOption": true
+                },
+                "interval": {
+                    "type": "number",
+                    "describe": "Specify the interval in seconds",
+                    "demandOption": false,
+                    "default": 60
+                }
+            }
+        }
+    }
+}
