@@ -94,7 +94,7 @@ postterminal response-time --url <url>
 postterminal response-time --url https://api.example.com
 ```
 
-### 7. Test API Authentication
+### 7. Make Authenticated API calls 
 To test API authentication, use the `authenticated-call` command:
 
 ```
