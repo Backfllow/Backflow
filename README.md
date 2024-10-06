@@ -1,5 +1,7 @@
 PostTerminal: Your API Management Companion
-PostTerminal is a powerful command-line interface (CLI) tool designed to simplify and enhance your interactions with APIs. Whether you're a developer, tester, or system administrator, PostTerminal equips you with essential functionalities to efficiently manage API requests, monitor endpoint health, load testing that run in batches, response time, etc.
+
+PostTerminal is a powerful command-line interface (CLI) tool designed to simplify and enhance your interactions with APIs in your terminal. Whether you're a developer, tester, or system administrator, PostTerminal equips you with essential functionalities to efficiently manage API requests, monitor endpoint health, load testing api endpoints that run in batches, response time(measured in `ms` ⏱️ ), test authenticated endpoints 📊  etc with readable error logs.
+
 
 
 ## Features
