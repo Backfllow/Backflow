@@ -114,7 +114,7 @@ export const checkResponseTime = (baseUrl) => __awaiter(void 0, void 0, void 0, 
         yield axios.get(baseUrl, { timeout: TIMEOUT_MS });
         const endTime = formatTime(new Date());
         const responseTime = Date.now() - start;
-        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
+        console.log(chalk.bgCyanBright.bold.bgBlueBright(`${RESPONSE_TIME_MESSAGE} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
     }
     catch (error) {
         handleError(error);
