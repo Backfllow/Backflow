@@ -31,7 +31,22 @@ export const apiRequest = (url, method, data) => __awaiter(void 0, void 0, void 
     }
 });
 export const isValidUrl = (url) => {
+    if (!url) {
+        return false;
+    }
     const regex = /^(ftp|http|https):\/\/[^ "]+$/;
-    return regex.test(url);
+    if (!regex.test(url)) {
+        return false;
+    }
+    try {
+        new URL(url);
+        return true;
+    }
+    catch (error) {
+        return false;
+    }
+};
+export const formatTime = (date) => {
+    return date.toTimeString().split(' ')[0];
 };
 //# sourceMappingURL=helpers.js.map

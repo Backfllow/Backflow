@@ -26,6 +26,26 @@ export const apiRequest = async (url: string, method: 'GET' | 'POST' | 'PUT' | '
 };
 
 export const isValidUrl = (url: string): boolean => {
-    const regex :  RegExp = /^(ftp|http|https):\/\/[^ "]+$/;
-    return regex.test(url);
+    if (!url) {
+        return false; // If the URL is empty or falsy
+    }
+
+    // Basic regex check for URL format
+    const regex: RegExp = /^(ftp|http|https):\/\/[^ "]+$/;
+    if (!regex.test(url)) {
+        return false; // Fail if the URL doesn't match the basic structure
+    }
+
+    // More robust URL check using the URL constructor
+    try {
+        new URL(url); // This will throw an error if the URL is invalid
+        return true;
+    } catch (error) {
+        return false; // Invalid URL
+    }
+};
+
+// Helper function to format time intervals (HH:mm:ss)
+export const formatTime = (date: Date): string => {
+    return date.toTimeString().split(' ')[0]; // Extracts and returns the HH:mm:ss part
 };

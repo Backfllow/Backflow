@@ -1,6 +1,6 @@
 import axios from 'axios';
 import chalk from 'chalk';
-import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl} from '../helpers/helpers.js';
+import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime} from '../helpers/helpers.js';
 
 
 export const authenticatedRequest = async (
@@ -128,15 +128,17 @@ export const checkResponseTime = async (baseUrl: string): Promise<void> => {
     }
 
     const start = Date.now();
+    const startTime = formatTime(new Date()); // Capture start time
+
     try {
         await axios.get(baseUrl, { timeout: TIMEOUT_MS });
-        const responseTime = Date.now() - start;
-        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} ${responseTime} ms`));
+        const endTime = formatTime(new Date()); // Capture end time
+        const responseTime = Date.now() - start; // Calculate duration in milliseconds
+        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
     } catch (error) {
         handleError(error);
     }
 };
-
 
 
 // Fetch backlog data (GET request)

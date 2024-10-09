@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest } from './service/functions.js'; // Ensure the path is correct
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest } from './service/functions.js'; 
 
 // CLI commands setup
 yargs(hideBin(process.argv))

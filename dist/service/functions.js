@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import axios from 'axios';
 import chalk from 'chalk';
-import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl } from '../helpers/helpers.js';
+import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl, formatTime } from '../helpers/helpers.js';
 export const authenticatedRequest = (url, method, data, token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
@@ -109,10 +109,12 @@ export const checkResponseTime = (baseUrl) => __awaiter(void 0, void 0, void 0, 
         return;
     }
     const start = Date.now();
+    const startTime = formatTime(new Date());
     try {
         yield axios.get(baseUrl, { timeout: TIMEOUT_MS });
+        const endTime = formatTime(new Date());
         const responseTime = Date.now() - start;
-        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} ${responseTime} ms`));
+        console.log(chalk.blue(`${RESPONSE_TIME_MESSAGE} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
     }
     catch (error) {
         handleError(error);
