@@ -1,7 +1,15 @@
 import axios from 'axios';
 import chalk from 'chalk';
-import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, RESPONSE_TIME_MESSAGE, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime} from '../helpers/helpers.js';
+import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime, TIME_TAKEN} from '../helpers/helpers.js';
 
+
+
+// Check health for multiple endpoints
+export const checkMultipleEndpointsHealth = async (baseUrls: string[]): Promise<void> => {
+    for (const baseUrl of baseUrls) {
+        await checkEndpointHealth(baseUrl);
+    }
+};
 
 export const authenticatedRequest = async (
     url: string, 
@@ -114,11 +122,17 @@ export const monitorEndpoint = async (baseUrl: string, interval: number) => {
         // Set a new interval
         intervalId = setInterval(checkAndMonitor, interval * 1000);
     };
+
+        // Handle graceful shutdown
+        process.on('SIGINT', () => {
+            clearInterval(intervalId);
+            console.log(chalk.yellow('Monitoring stopped.'));
+            process.exit(0);
+        });
+
     // Start the initial check
     checkAndMonitor();
 };
-
-
 
 // Response Time Checker
 export const checkResponseTime = async (baseUrl: string): Promise<void> => {
@@ -134,7 +148,7 @@ export const checkResponseTime = async (baseUrl: string): Promise<void> => {
         await axios.get(baseUrl, { timeout: TIMEOUT_MS });
         const endTime = formatTime(new Date()); // Capture end time
         const responseTime = Date.now() - start; // Calculate duration in milliseconds
-        console.log(chalk.bgCyanBright.bold.bgBlueBright(`${RESPONSE_TIME_MESSAGE} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
+        console.log(chalk.bgYellowBright.bold(`${TIME_TAKEN} Start time: ${startTime}, End time: ${endTime}, Duration: ${responseTime} ms`));
     } catch (error) {
         handleError(error);
     }

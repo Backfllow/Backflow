@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest } from './service/functions.js'; 
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth } from './service/functions.js'; 
 
 // CLI commands setup
 yargs(hideBin(process.argv))
@@ -138,7 +138,17 @@ yargs(hideBin(process.argv))
                 console.error(chalk.red('Request failed:'), error.message);
             }
         }
-    )    
+    )
+    .command('check-more-health <urls..>', 'Check health for multiple API endpoints', {
+        urls: {
+            type: 'array',
+            describe: 'List of URLs to check health',
+            demandOption: true,
+        },
+    }, async (argv: any) => {
+        await checkMultipleEndpointsHealth(argv.urls);
+    })
+
     .demandCommand(1, 'You must provide a valid command')
     .help()
     .argv;

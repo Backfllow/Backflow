@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest } from './service/functions.js';
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth } from './service/functions.js';
 yargs(hideBin(process.argv))
     .command('check-backlog', 'Check the API backlog', {
     url: {
@@ -128,6 +128,15 @@ yargs(hideBin(process.argv))
     catch (error) {
         console.error(chalk.red('Request failed:'), error.message);
     }
+}))
+    .command('check-more-health <urls..>', 'Check health for multiple API endpoints', {
+    urls: {
+        type: 'array',
+        describe: 'List of URLs to check health',
+        demandOption: true,
+    },
+}, (argv) => __awaiter(void 0, void 0, void 0, function* () {
+    yield checkMultipleEndpointsHealth(argv.urls);
 }))
     .demandCommand(1, 'You must provide a valid command')
     .help()

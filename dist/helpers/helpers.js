@@ -16,6 +16,7 @@ export const TIMEOUT_MS = 5000;
 export const MAX_CONCURRENT_REQUESTS = 5;
 export const ERROR_MESSAGE = 'Error checking response time';
 export const RESPONSE_TIME_MESSAGE = 'Response time:';
+export const TIME_TAKEN = 'Time taken to complete:';
 export const apiRequest = (url, method, data) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield axios({

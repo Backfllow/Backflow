@@ -9,7 +9,7 @@ export const TIMEOUT_MS : number = 5000; // Set timeout to 5 seconds
 export const MAX_CONCURRENT_REQUESTS : number = 5;
 export const ERROR_MESSAGE  : string = 'Error checking response time';
 export const RESPONSE_TIME_MESSAGE  : string = 'Response time:';
-
+export const TIME_TAKEN  : string = 'Time taken to complete:';
 // Utility function to handle API requests
 export const apiRequest = async (url: string, method: 'GET' | 'POST' | 'PUT' | 'PATCH', data?: any) => {
     try {
