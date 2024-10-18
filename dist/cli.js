@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth } from './service/functions.js';
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand } from './service/functions.js';
 yargs(hideBin(process.argv))
     .command('check-backlog', 'Check the API backlog', {
     url: {
@@ -137,6 +137,45 @@ yargs(hideBin(process.argv))
     },
 }, (argv) => __awaiter(void 0, void 0, void 0, function* () {
     yield checkMultipleEndpointsHealth(argv.urls);
+}))
+    .command('snyk-auth', 'Authenticate with Snyk', {}, () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const output = yield runSnykCommand('snyk auth');
+        console.log(chalk.green(output));
+    }
+    catch (error) {
+        console.error(chalk.red(error));
+    }
+}))
+    .command('snyk-test', 'Run Snyk test for vulnerabilities', {
+    path: {
+        type: 'string',
+        describe: 'Path to the project directory',
+        demandOption: true,
+    },
+}, (argv) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const output = yield runSnykCommand(`snyk test --all-projects --path=${argv.path}`);
+        console.log(chalk.green(output));
+    }
+    catch (error) {
+        console.error(chalk.red(error));
+    }
+}))
+    .command('snyk-monitor', 'Monitor the project for vulnerabilities', {
+    path: {
+        type: 'string',
+        describe: 'Path to the project directory',
+        demandOption: true,
+    },
+}, (argv) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const output = yield runSnykCommand(`snyk monitor --path=${argv.path}`);
+        console.log(chalk.green(output));
+    }
+    catch (error) {
+        console.error(chalk.red(error));
+    }
 }))
     .demandCommand(1, 'You must provide a valid command')
     .help()

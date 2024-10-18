@@ -1,8 +1,21 @@
 import axios from 'axios';
 import chalk from 'chalk';
+import { exec } from 'child_process';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime, TIME_TAKEN} from '../helpers/helpers.js';
 
 
+// Function to run Snyk commands
+export const runSnykCommand = (command: string) => {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(`Error: ${stderr}`);
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+};
 
 // Check health for multiple endpoints
 export const checkMultipleEndpointsHealth = async (baseUrls: string[]): Promise<void> => {

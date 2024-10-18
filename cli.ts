@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth } from './service/functions.js'; 
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand } from './service/functions.js'; 
 
 // CLI commands setup
 yargs(hideBin(process.argv))
@@ -147,6 +147,43 @@ yargs(hideBin(process.argv))
         },
     }, async (argv: any) => {
         await checkMultipleEndpointsHealth(argv.urls);
+    })
+
+    .command('snyk-auth', 'Authenticate with Snyk', {}, async () => {
+        try {
+            const output = await runSnykCommand('snyk auth');
+            console.log(chalk.green(output));
+        } catch (error) {
+            console.error(chalk.red(error));
+        }
+    })
+    .command('snyk-test', 'Run Snyk test for vulnerabilities', {
+        path: {
+            type: 'string',
+            describe: 'Path to the project directory',
+            demandOption: true,
+        },
+    }, async (argv: any) => {
+        try {
+            const output = await runSnykCommand(`snyk test --all-projects --path=${argv.path}`);
+            console.log(chalk.green(output));
+        } catch (error) {
+            console.error(chalk.red(error));
+        }
+    })
+    .command('snyk-monitor', 'Monitor the project for vulnerabilities', {
+        path: {
+            type: 'string',
+            describe: 'Path to the project directory',
+            demandOption: true,
+        },
+    }, async (argv: any) => {
+        try {
+            const output = await runSnykCommand(`snyk monitor --path=${argv.path}`);
+            console.log(chalk.green(output));
+        } catch (error) {
+            console.error(chalk.red(error));
+        }
     })
 
     .demandCommand(1, 'You must provide a valid command')

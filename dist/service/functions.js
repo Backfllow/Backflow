@@ -9,7 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import axios from 'axios';
 import chalk from 'chalk';
+import { exec } from 'child_process';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl, formatTime, TIME_TAKEN } from '../helpers/helpers.js';
+export const runSnykCommand = (command) => {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(`Error: ${stderr}`);
+            }
+            else {
+                resolve(stdout);
+            }
+        });
+    });
+};
 export const checkMultipleEndpointsHealth = (baseUrls) => __awaiter(void 0, void 0, void 0, function* () {
     for (const baseUrl of baseUrls) {
         yield checkEndpointHealth(baseUrl);
