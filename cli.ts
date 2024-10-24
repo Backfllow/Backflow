@@ -3,7 +3,8 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests } from './service/functions.js'; 
+import { promises as fs } from 'fs';
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests, logCommandHistory, logFilePath } from './service/functions.js'; 
 
 // CLI commands setup
 yargs(hideBin(process.argv))
@@ -52,6 +53,9 @@ yargs(hideBin(process.argv))
         await batchRequests(urls);
     })
 
+
+
+// Inside the load-test command
     .command('load-test [urls..]', 'Run load test with provided URLs', {
         urls: {
             type: 'array',
@@ -61,22 +65,35 @@ yargs(hideBin(process.argv))
     }, async (argv: any) => {
         try {
             const output = await runRustLoadTester(argv.urls);
-            // Split the output by lines
             const outputLines = output.split('\n');
-            
-            // Print "Rust Load Tester Output" with color
             console.log(chalk.bgRedBright(`Rust Load Tester Output :\n`));
-            
-            // Print the rest of the output without additional styling
             outputLines.forEach(line => {
                 console.log(line);
             });
-            
+
+            // Log command history
+            logCommandHistory('load-test', argv.urls, output);
         } catch (error) {
             console.error(`Failed to run Rust load tester: ${error}`);
         }
     })
     
+    .command('history', 'Retrieve command execution history', {}, async () => {
+        try {
+            const data = await fs.readFile(logFilePath, 'utf-8');
+            const logEntries = JSON.parse(data);
+    
+            logEntries.forEach((entry: { timestamp: any; command: any; params: any; result: any; }) => {
+                console.log(`Timestamp: ${entry.timestamp}`);
+                console.log(`Command: ${entry.command}`);
+                console.log(`Parameters: ${JSON.stringify(entry.params)}`);
+                console.log(`Result: ${entry.result} \n`);
+                console.log(chalk.magentaBright('-----------------------------------'));
+            });
+        } catch (error) {
+            console.error(`Failed to retrieve command history: ${error}`);
+        }
+    })
 
     .command('health-check', 'Check API endpoint health', {
         url: {
@@ -90,8 +107,10 @@ yargs(hideBin(process.argv))
             demandOption: false, // Makes the API version optional
         },
     }, async (argv: any) => {
-        await checkEndpointHealth(argv.url);
+       const endpointHealth =  await checkEndpointHealth(argv.url);
         
+
+        logCommandHistory('health-check', argv.url, endpointHealth);
         if (argv.apiversion) {
             console.log(chalk.green(`Using version: ${argv.apiversion}`)); // Display the version if provided
         } else {

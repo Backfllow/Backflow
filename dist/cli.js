@@ -11,7 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests } from './service/functions.js';
+import { promises as fs } from 'fs';
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests, logCommandHistory, logFilePath } from './service/functions.js';
 yargs(hideBin(process.argv))
     .command('check-backlog', 'Check the API backlog', {
     url: {
@@ -67,9 +68,26 @@ yargs(hideBin(process.argv))
         outputLines.forEach(line => {
             console.log(line);
         });
+        logCommandHistory('load-test', argv.urls, output);
     }
     catch (error) {
         console.error(`Failed to run Rust load tester: ${error}`);
+    }
+}))
+    .command('history', 'Retrieve command execution history', {}, () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield fs.readFile(logFilePath, 'utf-8');
+        const logEntries = JSON.parse(data);
+        logEntries.forEach((entry) => {
+            console.log(`Timestamp: ${entry.timestamp}`);
+            console.log(`Command: ${entry.command}`);
+            console.log(`Parameters: ${JSON.stringify(entry.params)}`);
+            console.log(`Result: ${entry.result} \n`);
+            console.log(chalk.magentaBright('-----------------------------------'));
+        });
+    }
+    catch (error) {
+        console.error(`Failed to retrieve command history: ${error}`);
     }
 }))
     .command('health-check', 'Check API endpoint health', {
@@ -84,7 +102,8 @@ yargs(hideBin(process.argv))
         demandOption: false,
     },
 }, (argv) => __awaiter(void 0, void 0, void 0, function* () {
-    yield checkEndpointHealth(argv.url);
+    const endpointHealth = yield checkEndpointHealth(argv.url);
+    logCommandHistory('health-check', argv.url, endpointHealth);
     if (argv.apiversion) {
         console.log(chalk.green(`Using version: ${argv.apiversion}`));
     }

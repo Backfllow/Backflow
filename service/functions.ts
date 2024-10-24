@@ -2,7 +2,48 @@ import axios from 'axios';
 import chalk from 'chalk';
 import { exec } from 'child_process';
 import { promises as fs } from 'fs';
+// import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime, TIME_TAKEN} from '../helpers/helpers.js';
+
+
+// const __filename = fileURLToPath(import.meta.url);
+// export const __dirname = dirname(__filename);
+
+
+
+
+const { dirname : __dirname , filename : __filename} = import.meta
+export const logFilePath = join(__dirname, '../command_history.json');
+
+// Function to log command history
+export const logCommandHistory = async (command: any, params: any, result: any) => {
+    const logEntry = {
+        command,
+        params,
+        result,
+        timestamp: new Date().toISOString(),
+    };
+
+    // Read existing log entries
+    let logEntries = [];
+    try {
+        const data = await fs.readFile(logFilePath, 'utf-8');
+        logEntries = JSON.parse(data);
+    } catch (error) {
+        // If the file does not exist or there's an error reading it, initialize logEntries as empty
+        if (error.code !== 'ENOENT') {
+            console.error(`Error reading log file: ${error.message}`);
+        }
+    }
+
+    // Add new log entry
+    logEntries.push(logEntry);
+
+    // Write updated log entries back to the file
+    await fs.writeFile(logFilePath, JSON.stringify(logEntries, null, 2));
+};
+
 
 export const runRustLoadTester = async (urls: string[]): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -142,7 +183,7 @@ export const checkEndpointHealth = async (baseUrl: string): Promise<void> => {
     try {
         const response = await axios.get(baseUrl, { timeout: TIMEOUT_MS });
         if (response.status === HTTP_OK) {
-            console.log(chalk.bold.green(`${HEALTHY_MESSAGE}: ${baseUrl}`));
+           return console.log(chalk.bold.green(`${HEALTHY_MESSAGE}: ${baseUrl}`));
         } else {
             console.error(chalk.yellow(`${UNHEALTHY_MESSAGE}: ${baseUrl} - Status Code: ${response.status}`));
         }

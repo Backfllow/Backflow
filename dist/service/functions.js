@@ -11,7 +11,30 @@ import axios from 'axios';
 import chalk from 'chalk';
 import { exec } from 'child_process';
 import { promises as fs } from 'fs';
+import { join } from 'path';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl, formatTime, TIME_TAKEN } from '../helpers/helpers.js';
+const { dirname: __dirname, filename: __filename } = import.meta;
+export const logFilePath = join(__dirname, '../command_history.json');
+export const logCommandHistory = (command, params, result) => __awaiter(void 0, void 0, void 0, function* () {
+    const logEntry = {
+        command,
+        params,
+        result,
+        timestamp: new Date().toISOString(),
+    };
+    let logEntries = [];
+    try {
+        const data = yield fs.readFile(logFilePath, 'utf-8');
+        logEntries = JSON.parse(data);
+    }
+    catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.error(`Error reading log file: ${error.message}`);
+        }
+    }
+    logEntries.push(logEntry);
+    yield fs.writeFile(logFilePath, JSON.stringify(logEntries, null, 2));
+});
 export const runRustLoadTester = (urls) => __awaiter(void 0, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
         const rustProjectPath = './rust_load_tester';
@@ -121,7 +144,7 @@ export const checkEndpointHealth = (baseUrl) => __awaiter(void 0, void 0, void 0
     try {
         const response = yield axios.get(baseUrl, { timeout: TIMEOUT_MS });
         if (response.status === HTTP_OK) {
-            console.log(chalk.bold.green(`${HEALTHY_MESSAGE}: ${baseUrl}`));
+            return console.log(chalk.bold.green(`${HEALTHY_MESSAGE}: ${baseUrl}`));
         }
         else {
             console.error(chalk.yellow(`${UNHEALTHY_MESSAGE}: ${baseUrl} - Status Code: ${response.status}`));
