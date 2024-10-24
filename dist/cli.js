@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand } from './service/functions.js';
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests } from './service/functions.js';
 yargs(hideBin(process.argv))
     .command('check-backlog', 'Check the API backlog', {
     url: {
@@ -36,7 +36,7 @@ yargs(hideBin(process.argv))
 }, (argv) => __awaiter(void 0, void 0, void 0, function* () {
     yield checkVersion(argv.url, argv.version);
 }))
-    .command('load-test', 'Test a batch of API requests', {
+    .command('batch-request', 'Test a batch of API requests', {
     url: {
         type: 'array',
         describe: 'Specify the base URLs to check',
@@ -52,6 +52,29 @@ yargs(hideBin(process.argv))
         return argv.apiversion ? `${url}?apiversion=${argv.apiversion}` : url;
     });
     yield batchRequests(urls);
+}))
+    .command('load-test', 'Test a batch of API requests', {
+    url: {
+        type: 'array',
+        describe: 'Specify the base URLs to check',
+        demandOption: true,
+    },
+    apiversion: {
+        type: 'string',
+        describe: 'Specify the expected API version',
+        demandOption: false,
+    },
+}, (argv) => __awaiter(void 0, void 0, void 0, function* () {
+    const urls = argv.url.map((url) => {
+        return argv.apiversion ? `${url}?apiversion=${argv.apiversion}` : url;
+    });
+    try {
+        const output = yield runRustLoadTester(urls);
+        console.log(`Rust Load Tester Output:\n${output}`);
+    }
+    catch (error) {
+        console.error(`Failed to run Rust load tester: ${error}`);
+    }
 }))
     .command('health-check', 'Check API endpoint health', {
     url: {

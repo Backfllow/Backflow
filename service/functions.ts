@@ -4,6 +4,24 @@ import { exec } from 'child_process';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime, TIME_TAKEN} from '../helpers/helpers.js';
 
 
+export const runRustLoadTester = (urls: string[]): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const rustBinaryPath = '../rust_load_tester/target/release/rust_load_tester'; // Adjust path as needed
+        const command = `${rustBinaryPath} ${urls.join(' ')}`;
+
+        exec(command, { timeout: 30000 }, (error, stdout, stderr) => {  // Add a timeout if needed
+            if (error) {
+                reject(`Execution error: ${error.message}\n${stderr}`);
+            } else if (stderr) {
+                console.warn(`Rust binary warning: ${stderr}`);
+                resolve(stdout);  // stdout might still have valid data
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+};
+
 // Function to run Snyk commands
 export const runSnykCommand = (command: string) => {
     return new Promise((resolve, reject) => {
@@ -166,6 +184,8 @@ export const checkResponseTime = async (baseUrl: string): Promise<void> => {
         handleError(error);
     }
 };
+
+// NEED A REFACTOR HERE 
 
 
 // Fetch backlog data (GET request)

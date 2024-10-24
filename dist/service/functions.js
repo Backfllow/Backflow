@@ -11,6 +11,24 @@ import axios from 'axios';
 import chalk from 'chalk';
 import { exec } from 'child_process';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl, formatTime, TIME_TAKEN } from '../helpers/helpers.js';
+export const runRustLoadTester = (urls) => {
+    return new Promise((resolve, reject) => {
+        const rustBinaryPath = '../rust_load_tester/target/release/rust_load_tester';
+        const command = `${rustBinaryPath} ${urls.join(' ')}`;
+        exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
+            if (error) {
+                reject(`Execution error: ${error.message}\n${stderr}`);
+            }
+            else if (stderr) {
+                console.warn(`Rust binary warning: ${stderr}`);
+                resolve(stdout);
+            }
+            else {
+                resolve(stdout);
+            }
+        });
+    });
+};
 export const runSnykCommand = (command) => {
     return new Promise((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {

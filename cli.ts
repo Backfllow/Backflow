@@ -3,7 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
-import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, batchRequests, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand } from './service/functions.js'; 
+import { fetchBacklog, checkEndpointHealth, checkResponseTime, checkVersion, monitorEndpoint, authenticatedRequest, checkMultipleEndpointsHealth, runSnykCommand, runRustLoadTester, batchRequests } from './service/functions.js'; 
 
 // CLI commands setup
 yargs(hideBin(process.argv))
@@ -33,7 +33,7 @@ yargs(hideBin(process.argv))
         await checkVersion(argv.url, argv.version);
     })
 
-    .command('load-test', 'Test a batch of API requests', {
+    .command('batch-request', 'Test a batch of API requests', {
         url: {
             type: 'array',
             describe: 'Specify the base URLs to check',
@@ -51,6 +51,36 @@ yargs(hideBin(process.argv))
         });
         await batchRequests(urls);
     })
+
+    .command(
+        'load-test', 
+        'Test a batch of API requests', 
+        {
+            url: {
+                type: 'array',
+                describe: 'Specify the base URLs to check',
+                demandOption: true, // URLs are mandatory
+            },
+            apiversion: {
+                type: 'string',
+                describe: 'Specify the expected API version',
+                demandOption: false, // Optional
+            },
+        },
+        async (argv: any) => {
+            const urls = argv.url.map((url: string) => {
+                // Append API version to the URL if provided
+                return argv.apiversion ? `${url}?apiversion=${argv.apiversion}` : url;
+            });
+            
+            try {
+                const output = await runRustLoadTester(urls);
+                console.log(`Rust Load Tester Output:\n${output}`);
+            } catch (error) {
+                console.error(`Failed to run Rust load tester: ${error}`);
+            }
+        }
+    )
 
     .command('health-check', 'Check API endpoint health', {
         url: {
