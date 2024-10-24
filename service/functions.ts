@@ -1,26 +1,50 @@
 import axios from 'axios';
 import chalk from 'chalk';
 import { exec } from 'child_process';
+import { promises as fs } from 'fs';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE , apiRequest , isValidUrl, formatTime, TIME_TAKEN} from '../helpers/helpers.js';
 
-
-export const runRustLoadTester = (urls: string[]): Promise<string> => {
+export const runRustLoadTester = async (urls: string[]): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const rustBinaryPath = '../rust_load_tester/target/release/rust_load_tester'; // Adjust path as needed
-        const command = `${rustBinaryPath} ${urls.join(' ')}`;
+        const rustProjectPath = './rust_load_tester';
+        const rustBinaryPath = `${rustProjectPath}/target/release/rust_load_tester`;
 
-        exec(command, { timeout: 30000 }, (error, stdout, stderr) => {  // Add a timeout if needed
-            if (error) {
-                reject(`Execution error: ${error.message}\n${stderr}`);
-            } else if (stderr) {
-                console.warn(`Rust binary warning: ${stderr}`);
-                resolve(stdout);  // stdout might still have valid data
-            } else {
-                resolve(stdout);
+        // Determine which shell to use
+        const shellPath = process.env.SHELL || '/bin/sh';
+
+        // Build Rust project
+        exec('cargo build --release', { cwd: rustProjectPath, shell: shellPath }, async (buildError, buildStdout, buildStderr) => {
+            if (buildError) {
+                reject(`Build error: ${buildError.message}\n${buildStderr}`);
+                return;
             }
+
+            console.log(`Build output: ${buildStdout}`);
+
+            // Check if the binary exists
+            try {
+                await fs.access(rustBinaryPath);
+            } catch {
+                reject(`Binary not found: ${rustBinaryPath}`);
+                return;
+            }
+
+            // Run load testing binary
+            const command = `${rustBinaryPath} ${urls.join(' ')}`;
+            exec(command, {shell: shellPath }, (error, stdout, stderr) => {
+                if (error) {
+                    reject(`Execution error: ${error.message}\n${stderr}`);
+                } else if (stderr) {
+                    console.warn(`Rust binary warning: ${stderr}`);
+                    resolve(stdout);  // stdout might still have valid data
+                } else {
+                    resolve(stdout);
+                }
+            });
         });
     });
 };
+
 
 // Function to run Snyk commands
 export const runSnykCommand = (command: string) => {

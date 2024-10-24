@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     let body = res.text().await.unwrap_or_else(|_| "No body".to_string());  // Get the response body
 
                     // Print formatted output for successful response
-                    println!("✅ Response from URL: {}", url);
+                    println!("✅  🦀 Response from URL: {}", url);
                     println!("   ➡ {}", body);
                     println!("⏱️  Response time: {} ms\n", elapsed_time);
 

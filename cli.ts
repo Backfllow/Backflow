@@ -52,35 +52,31 @@ yargs(hideBin(process.argv))
         await batchRequests(urls);
     })
 
-    .command(
-        'load-test', 
-        'Test a batch of API requests', 
-        {
-            url: {
-                type: 'array',
-                describe: 'Specify the base URLs to check',
-                demandOption: true, // URLs are mandatory
-            },
-            apiversion: {
-                type: 'string',
-                describe: 'Specify the expected API version',
-                demandOption: false, // Optional
-            },
+    .command('load-test [urls..]', 'Run load test with provided URLs', {
+        urls: {
+            type: 'array',
+            describe: 'URLs to test',
+            demandOption: true,
         },
-        async (argv: any) => {
-            const urls = argv.url.map((url: string) => {
-                // Append API version to the URL if provided
-                return argv.apiversion ? `${url}?apiversion=${argv.apiversion}` : url;
+    }, async (argv: any) => {
+        try {
+            const output = await runRustLoadTester(argv.urls);
+            // Split the output by lines
+            const outputLines = output.split('\n');
+            
+            // Print "Rust Load Tester Output" with color
+            console.log(chalk.bgRedBright(`Rust Load Tester Output :\n`));
+            
+            // Print the rest of the output without additional styling
+            outputLines.forEach(line => {
+                console.log(line);
             });
             
-            try {
-                const output = await runRustLoadTester(urls);
-                console.log(`Rust Load Tester Output:\n${output}`);
-            } catch (error) {
-                console.error(`Failed to run Rust load tester: ${error}`);
-            }
+        } catch (error) {
+            console.error(`Failed to run Rust load tester: ${error}`);
         }
-    )
+    })
+    
 
     .command('health-check', 'Check API endpoint health', {
         url: {

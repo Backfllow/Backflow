@@ -10,25 +10,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import axios from 'axios';
 import chalk from 'chalk';
 import { exec } from 'child_process';
+import { promises as fs } from 'fs';
 import { ERROR_MESSAGE, HEALTHY_MESSAGE, HTTP_OK, MAX_CONCURRENT_REQUESTS, TIMEOUT_MS, UNHEALTHY_MESSAGE, apiRequest, isValidUrl, formatTime, TIME_TAKEN } from '../helpers/helpers.js';
-export const runRustLoadTester = (urls) => {
+export const runRustLoadTester = (urls) => __awaiter(void 0, void 0, void 0, function* () {
     return new Promise((resolve, reject) => {
-        const rustBinaryPath = '../rust_load_tester/target/release/rust_load_tester';
-        const command = `${rustBinaryPath} ${urls.join(' ')}`;
-        exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
-            if (error) {
-                reject(`Execution error: ${error.message}\n${stderr}`);
+        const rustProjectPath = './rust_load_tester';
+        const rustBinaryPath = `${rustProjectPath}/target/release/rust_load_tester`;
+        const shellPath = process.env.SHELL || '/bin/sh';
+        exec('cargo build --release', { cwd: rustProjectPath, shell: shellPath }, (buildError, buildStdout, buildStderr) => __awaiter(void 0, void 0, void 0, function* () {
+            if (buildError) {
+                reject(`Build error: ${buildError.message}\n${buildStderr}`);
+                return;
             }
-            else if (stderr) {
-                console.warn(`Rust binary warning: ${stderr}`);
-                resolve(stdout);
+            console.log(`Build output: ${buildStdout}`);
+            try {
+                yield fs.access(rustBinaryPath);
             }
-            else {
-                resolve(stdout);
+            catch (_a) {
+                reject(`Binary not found: ${rustBinaryPath}`);
+                return;
             }
-        });
+            const command = `${rustBinaryPath} ${urls.join(' ')}`;
+            exec(command, { shell: shellPath }, (error, stdout, stderr) => {
+                if (error) {
+                    reject(`Execution error: ${error.message}\n${stderr}`);
+                }
+                else if (stderr) {
+                    console.warn(`Rust binary warning: ${stderr}`);
+                    resolve(stdout);
+                }
+                else {
+                    resolve(stdout);
+                }
+            });
+        }));
     });
-};
+});
 export const runSnykCommand = (command) => {
     return new Promise((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {

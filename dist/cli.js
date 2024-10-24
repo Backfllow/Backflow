@@ -53,24 +53,20 @@ yargs(hideBin(process.argv))
     });
     yield batchRequests(urls);
 }))
-    .command('load-test', 'Test a batch of API requests', {
-    url: {
+    .command('load-test [urls..]', 'Run load test with provided URLs', {
+    urls: {
         type: 'array',
-        describe: 'Specify the base URLs to check',
+        describe: 'URLs to test',
         demandOption: true,
     },
-    apiversion: {
-        type: 'string',
-        describe: 'Specify the expected API version',
-        demandOption: false,
-    },
 }, (argv) => __awaiter(void 0, void 0, void 0, function* () {
-    const urls = argv.url.map((url) => {
-        return argv.apiversion ? `${url}?apiversion=${argv.apiversion}` : url;
-    });
     try {
-        const output = yield runRustLoadTester(urls);
-        console.log(`Rust Load Tester Output:\n${output}`);
+        const output = yield runRustLoadTester(argv.urls);
+        const outputLines = output.split('\n');
+        console.log(chalk.bgRedBright(`Rust Load Tester Output :\n`));
+        outputLines.forEach(line => {
+            console.log(line);
+        });
     }
     catch (error) {
         console.error(`Failed to run Rust load tester: ${error}`);
